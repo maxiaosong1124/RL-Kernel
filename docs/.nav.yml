@@ -1,0 +1,26 @@
+nav:
+  - Home: README.md
+  - User Guide:
+    - usage/README.md
+    - Getting Started:
+      - getting_started/quickstart.md
+      - getting_started/installation.md
+    - Operators:
+      - operators/README.md
+      - operators/fused-logp.md
+      - operators/sampling.md
+  - Developer Guide:
+    - contributing/README.md
+    - General:
+      - contributing/*
+      - contributing/operator-doc-template.md
+    - Design Documents:
+      - design/*
+  - Benchmarking:
+    - benchmarking/README.md
+  - API Reference:
+    - api/README.md
+  - CLI Reference:
+    - cli/README.md
+  - Community:
+    - community/*

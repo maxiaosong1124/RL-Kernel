@@ -1,16 +1,41 @@
-# Kernel-Align
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Hardware](https://img.shields.io/badge/Hardware-AMD%20ROCm%20%7C%20NVIDIA%20CUDA-orange)](https://github.com/Flink-ddd/RL-Engine-Lab)
-
-**Kernel-Align** is a transparent, high-performance infrastructure for Reinforcement Learning post-training. It bridges the gap between high-level alignment algorithms (DPO, GRPO, PPO) and low-level hardware optimizations on both AMD (ROCm) and NVIDIA (CUDA) platforms.
-
-## Key Features
-
-- **Hardware-Aware Design**: Built-in support for AMD/NVIDIA with automatic backend discovery.
-- **Inference Optimized**: Native integration with **vLLM** for fast rollout/sampling.
-- **Alignment Ready**: Clean implementations of DPO and GRPO (DeepSeek-style).
-- **Infra-First**: Designed for learning and extending RLHF toolchains (DeepSpeed, Ray, Triton).
-
 ---
-*Stay hungry, stay infra.*
+hide:
+  - navigation
+  - toc
+---
+
+# Welcome to Kernel-Align
+
+<figure markdown="span">
+  ![](./assets/rl-engine-log-display.png){ align="center" alt="Kernel-Align" width="38%" }
+</figure>
+
+<p style="text-align:center">
+<strong>High-performance kernels and runtime infrastructure for RL post-training.</strong>
+</p>
+
+<p style="text-align:center">
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+<a class="github-button" href="https://github.com/Flink-ddd/Kernel-Align" data-show-count="true" data-size="large" aria-label="Star">Star</a>
+<a class="github-button" href="https://github.com/Flink-ddd/Kernel-Align/subscription" data-show-count="true" data-icon="octicon-eye" data-size="large" aria-label="Watch">Watch</a>
+<a class="github-button" href="https://github.com/Flink-ddd/Kernel-Align/fork" data-show-count="true" data-icon="octicon-repo-forked" data-size="large" aria-label="Fork">Fork</a>
+</p>
+
+Kernel-Align bridges high-level alignment algorithms and low-level hardware optimizations.
+It targets GRPO, PPO, DPO, and other reinforcement learning post-training workloads where
+log probability computation, sampling, and memory pressure dominate the critical path.
+
+Where to get started depends on the type of user:
+
+- Run Kernel-Align locally with the [Quickstart Guide](./getting_started/quickstart.md).
+- Understand supported kernels from the [Operators](./operators/README.md) section.
+- Add a new operator by following the [Developer Guide](./contributing/README.md).
+- Read dispatch details in the [Runtime Dispatch design document](./design/runtime-dispatch.md).
+
+Kernel-Align focuses on:
+
+- Hardware-aware dispatch for CUDA, ROCm, and PyTorch fallback paths.
+- Fused GPU operators for post-training bottlenecks.
+- Operator documentation as part of the merge contract.
+- A documentation structure that can grow with the project as more operators,
+  runtime features, benchmarks, and APIs are added.
