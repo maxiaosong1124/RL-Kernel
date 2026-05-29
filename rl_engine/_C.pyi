@@ -4,3 +4,40 @@ import torch
 
 def fused_logp(logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor: ...
 def fused_logp_sm90(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor: ...
+def fused_logp_forward_out(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+    output: torch.Tensor,
+) -> torch.Tensor: ...
+def fused_logp_forward_fp32(logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor: ...
+def fused_logp_forward_indexed_out(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+    row_indices: torch.Tensor,
+    output: torch.Tensor,
+) -> torch.Tensor: ...
+def fused_logp_forward_indexed_fp32(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+    row_indices: torch.Tensor,
+) -> torch.Tensor: ...
+def fused_logp_forward_online_out(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+    output: torch.Tensor,
+) -> torch.Tensor: ...
+def fused_logp_forward_online_fp32(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+) -> torch.Tensor: ...
+def fused_logp_forward_online_indexed_out(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+    row_indices: torch.Tensor,
+    output: torch.Tensor,
+) -> torch.Tensor: ...
+def fused_logp_forward_online_indexed_fp32(
+    logits: torch.Tensor,
+    token_ids: torch.Tensor,
+    row_indices: torch.Tensor,
+) -> torch.Tensor: ...

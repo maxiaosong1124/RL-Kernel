@@ -38,9 +38,146 @@ class FusedLogpGenericOp:
     def __init__(self):
         if not _EXT_AVAILABLE or not hasattr(_C, "fused_logp"):
             raise RuntimeError("Base custom kernel 'fused_logp' is unavailable.")
-        self.op = _C.fused_logp
+        self._backend = _C
+        self.op = self._backend.fused_logp
         logger.info("Successfully linked to precompiled _C.fused_logp fallback kernel.")
 
     def __call__(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
-        token_ids_fused = token_ids.to(device=logits.device, dtype=torch.int32).contiguous()
-        return self.op(logits, token_ids_fused)
+        return self.apply(logits, token_ids)
+
+    def _prepare_inputs(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Size]:
+        orig_shape = logits.shape[:-1]
+        logits_2d = logits.view(-1, logits.size(-1))
+        token_ids_1d = token_ids.view(-1).to(device=logits.device, dtype=torch.long).contiguous()
+        return logits_2d, token_ids_1d, orig_shape
+
+    def _prepare_output(self, output: torch.Tensor, orig_shape: torch.Size) -> torch.Tensor:
+        if output.shape != orig_shape:
+            raise ValueError(
+                f"output shape {tuple(output.shape)} must match logits leading shape "
+                f"{tuple(orig_shape)}"
+            )
+        return output.view(-1)
+
+    def _prepare_indices(self, row_indices: torch.Tensor, logits: torch.Tensor) -> torch.Tensor:
+        return row_indices.view(-1).to(device=logits.device, dtype=torch.long).contiguous()
+
+    def apply(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
+        """Return selected-token log probabilities with output dtype matching logits."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        results = self.op(logits_2d, token_ids_1d)
+        return results.view(orig_shape)
+
+    def apply_fp32(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
+        """Return selected-token log probabilities in float32."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        results = self._backend.fused_logp_forward_fp32(logits_2d, token_ids_1d)
+        return results.view(orig_shape)
+
+    def out(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+        output: torch.Tensor,
+    ) -> torch.Tensor:
+        """Write selected-token log probabilities into a caller-provided output tensor."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        output_1d = self._prepare_output(output, orig_shape)
+        results = self._backend.fused_logp_forward_out(logits_2d, token_ids_1d, output_1d)
+        return results.view(orig_shape)
+
+    def indexed_out(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+        row_indices: torch.Tensor,
+        output: torch.Tensor,
+    ) -> torch.Tensor:
+        """Write selected-token log probabilities only for indexed rows."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        row_indices_1d = self._prepare_indices(row_indices, logits)
+        output_1d = self._prepare_output(output, orig_shape)
+        results = self._backend.fused_logp_forward_indexed_out(
+            logits_2d,
+            token_ids_1d,
+            row_indices_1d,
+            output_1d,
+        )
+        return results.view(orig_shape)
+
+    def indexed_fp32(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+        row_indices: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return dense float32 log probabilities with only indexed rows computed."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        row_indices_1d = self._prepare_indices(row_indices, logits)
+        results = self._backend.fused_logp_forward_indexed_fp32(
+            logits_2d,
+            token_ids_1d,
+            row_indices_1d,
+        )
+        return results.view(orig_shape)
+
+    def online_out(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+        output: torch.Tensor,
+    ) -> torch.Tensor:
+        """Write selected-token log probabilities using online log-sum-exp."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        output_1d = self._prepare_output(output, orig_shape)
+        results = self._backend.fused_logp_forward_online_out(
+            logits_2d,
+            token_ids_1d,
+            output_1d,
+        )
+        return results.view(orig_shape)
+
+    def online_fp32(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
+        """Return online log-sum-exp selected-token log probabilities in float32."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        results = self._backend.fused_logp_forward_online_fp32(logits_2d, token_ids_1d)
+        return results.view(orig_shape)
+
+    def online_indexed_out(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+        row_indices: torch.Tensor,
+        output: torch.Tensor,
+    ) -> torch.Tensor:
+        """Write online log-sum-exp results only for indexed rows."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        row_indices_1d = self._prepare_indices(row_indices, logits)
+        output_1d = self._prepare_output(output, orig_shape)
+        results = self._backend.fused_logp_forward_online_indexed_out(
+            logits_2d,
+            token_ids_1d,
+            row_indices_1d,
+            output_1d,
+        )
+        return results.view(orig_shape)
+
+    def online_indexed_fp32(
+        self,
+        logits: torch.Tensor,
+        token_ids: torch.Tensor,
+        row_indices: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return float32 online log-sum-exp results for indexed rows."""
+        logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
+        row_indices_1d = self._prepare_indices(row_indices, logits)
+        results = self._backend.fused_logp_forward_online_indexed_fp32(
+            logits_2d,
+            token_ids_1d,
+            row_indices_1d,
+        )
+        return results.view(orig_shape)

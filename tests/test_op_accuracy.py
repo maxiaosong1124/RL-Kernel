@@ -8,6 +8,10 @@ from rl_engine.platforms.device import device_ctx
 from rl_engine.utils.logger import logger
 
 
+def _fused_logp_op(op_type: str = "logp"):
+    return kernel_registry.get_op(op_type)
+
+
 def test_accuracy():
     device = device_ctx.device
     dtype = device_ctx.get_preferred_dtype()
@@ -31,7 +35,7 @@ def test_accuracy():
         torch.cuda.synchronize()
 
     try:
-        logp_operator = kernel_registry.get_op("logp")
+        logp_operator = _fused_logp_op()
         custom_logp = logp_operator(logits, token_ids)
     except Exception as e:
         logger.error(f"Failed to execute FusedLogp: {e}")
@@ -65,7 +69,7 @@ def test_fused_logp_out_reuses_output_storage():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1).to(dtype)
-    result = FusedLogp.out(logits, token_ids, output)
+    result = _fused_logp_op().out(logits, token_ids, output)
 
     assert result.data_ptr() == output.data_ptr()
     assert torch.allclose(result, ref_logp, atol=1e-3, rtol=1e-3)
@@ -79,7 +83,7 @@ def test_fused_logp_fp32_output():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1)
-    result = FusedLogp.apply_fp32(logits, token_ids)
+    result = _fused_logp_op().apply_fp32(logits, token_ids)
 
     assert result.dtype == torch.float32
     assert torch.allclose(result, ref_logp, atol=1e-3, rtol=1e-3)
@@ -100,7 +104,7 @@ def test_fused_logp_indexed_out_only_updates_valid_rows():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1).to(dtype)
-    result = FusedLogp.indexed_out(logits, token_ids, row_indices, output)
+    result = _fused_logp_op("logp_indexed").indexed_out(logits, token_ids, row_indices, output)
 
     assert result.data_ptr() == output.data_ptr()
     assert torch.allclose(result[mask], ref_logp[mask], atol=1e-3, rtol=1e-3)
@@ -118,7 +122,7 @@ def test_fused_logp_indexed_fp32_output():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1)
-    result = FusedLogp.indexed_fp32(logits, token_ids, row_indices)
+    result = _fused_logp_op("logp_indexed").indexed_fp32(logits, token_ids, row_indices)
 
     assert result.dtype == torch.float32
     assert torch.allclose(result[mask], ref_logp[mask], atol=1e-3, rtol=1e-3)
@@ -135,7 +139,7 @@ def test_fused_logp_online_out_matches_reference():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1).to(dtype)
-    result = FusedLogp.online_out(logits, token_ids, output)
+    result = _fused_logp_op("logp_online").online_out(logits, token_ids, output)
 
     assert result.data_ptr() == output.data_ptr()
     assert torch.allclose(result, ref_logp, atol=1e-3, rtol=1e-3)
@@ -156,7 +160,12 @@ def test_fused_logp_online_indexed_out_only_updates_valid_rows():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1).to(dtype)
-    result = FusedLogp.online_indexed_out(logits, token_ids, row_indices, output)
+    result = _fused_logp_op("logp_online_indexed").online_indexed_out(
+        logits,
+        token_ids,
+        row_indices,
+        output,
+    )
 
     assert result.data_ptr() == output.data_ptr()
     assert torch.allclose(result[mask], ref_logp[mask], atol=1e-3, rtol=1e-3)
@@ -174,7 +183,11 @@ def test_fused_logp_online_indexed_fp32_output():
 
     ref_logp = torch.log_softmax(logits.float(), dim=-1)
     ref_logp = torch.gather(ref_logp, dim=-1, index=token_ids.unsqueeze(-1)).squeeze(-1)
-    result = FusedLogp.online_indexed_fp32(logits, token_ids, row_indices)
+    result = _fused_logp_op("logp_online_indexed").online_indexed_fp32(
+        logits,
+        token_ids,
+        row_indices,
+    )
 
     assert result.dtype == torch.float32
     assert torch.allclose(result[mask], ref_logp[mask], atol=1e-3, rtol=1e-3)

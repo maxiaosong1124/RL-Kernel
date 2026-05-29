@@ -55,6 +55,18 @@ class KernelRegistry:
                     OpBackend.TRITON_GENERIC,
                     OpBackend.PYTORCH_NATIVE,
                 ],
+                "logp_indexed": [
+                    OpBackend.CUDA_FUSED_LOGP_GENERIC,
+                    OpBackend.PYTORCH_NATIVE,
+                ],
+                "logp_online": [
+                    OpBackend.CUDA_FUSED_LOGP_GENERIC,
+                    OpBackend.PYTORCH_NATIVE,
+                ],
+                "logp_online_indexed": [
+                    OpBackend.CUDA_FUSED_LOGP_GENERIC,
+                    OpBackend.PYTORCH_NATIVE,
+                ],
                 "attn": [OpBackend.FLASH_ATTN, OpBackend.TRITON_GENERIC, OpBackend.PYTORCH_NATIVE],
                 ## Default dispatch logic for new operators
             },
