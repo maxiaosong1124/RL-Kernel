@@ -7,5 +7,6 @@ Start with:
 
 - [Quickstart](../getting_started/quickstart.md)
 - [Installation](../getting_started/installation.md)
+- [Single-GPU GRPO Example](grpo-single-gpu-example.md)
 - [Operators](../operators/README.md)
 - [Weight Sync Bridge](weight-sync-bridge.md)
