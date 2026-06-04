@@ -3,6 +3,7 @@ nav:
   - User Guide:
     - usage/README.md
     - usage/weight-sync-bridge.md
+    - usage/grpo-single-gpu-example.md
     - Getting Started:
       - getting_started/quickstart.md
       - getting_started/installation.md
