@@ -19,6 +19,7 @@ concurrency:
   group: gpu-ci-serial
   cancel-in-progress: false
 
+
 jobs:
   gpu-tests:
     if: contains(github.event.pull_request.labels.*.name, 'needs-gpu-ci')
