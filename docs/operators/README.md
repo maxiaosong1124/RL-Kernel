@@ -19,5 +19,6 @@ Every operator page should include:
 ## Current Pages
 
 - [Fused LogP](fused-logp.md)
+- [GRPO Loss](grpo-loss.md)
 - [Sampling](sampling.md)
 - [Operator Doc Template](../contributing/operator-doc-template.md)
