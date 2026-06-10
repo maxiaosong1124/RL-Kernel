@@ -12,7 +12,7 @@
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://github.com/Flink-ddd/RL-Kernel"><img src="https://img.shields.io/badge/Hardware-NVIDIA%20CUDA%20%7C%20AMD%20ROCm-orange" alt="Hardware"></a>
   <a href="https://discord.gg/RGUQrr74z"><img src="https://img.shields.io/badge/Discord-Join%20Us-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/RL-Align/RL-Kernel/tree/main/docs"><img src="https://img.shields.io/badge/Documentation-Docs-2ea44f" alt="Documentation"></a>
+  <a href="https://a-kaa.github.io/RL-Kernel/"><img src="https://img.shields.io/badge/Documentation-Docs-2ea44f" alt="Documentation"></a>
   <a href="https://deepwiki.com/RL-Align/RL-Kernel"><img src="https://img.shields.io/badge/Ask-DeepWiki-7B3FE4" alt="Ask DeepWiki"></a>
 </p>
 
