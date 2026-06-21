@@ -28,6 +28,9 @@ pip install -e ".[vllm]"
 Install the vLLM extra only on rollout or benchmark environments that need the
 vLLM runtime. Core CI and mocked integration tests do not require it.
 
+For common CUDA, ROCm, vLLM, fallback, and CI questions, see the
+[FAQ](faq.md).
+
 ## Development Dependencies
 
 ```bash
