@@ -245,8 +245,23 @@ def test_scale_default_and_explicit():
 
 # key_padding_mask (True=valid): padded key columns get zero weight, so the
 # result equals attention computed over only the valid keys.
+#
+# NOTE: padding changes the softmax reduction width (Skv=10 vs Skv=6).  Even
+# though masked positions contribute exp(-inf)=0 to the sum, the internal
+# reduction order of torch.softmax over a size-10 row vs a size-6 row may
+# differ (vectorisation boundaries, intermediate rounding of partial sums),
+# so bitwise equality across different Skv is NOT guaranteed in IEEE 754.
+# We assert near-equality (atol=1e-6) which validates the masking semantics
+# without over-constraining the floating-point reduction path.
+_PADDING_ATOL = 1.0e-6
+
+
 def test_key_padding_mask_excludes_padded_keys():
-    """key_padding_mask: padded keys get zero weight (== attending over valid keys only)."""
+    """key_padding_mask: padded keys get zero weight (≈ attending over valid keys only).
+
+    Not bitwise-equal because the softmax reduction width differs (Skv=10 vs 6);
+    see comment above for rationale.
+    """
     op = NativeAttentionOp()
     gen = torch.Generator().manual_seed(5)
     q = torch.randn(2, _N_HEADS, 6, _HEAD_DIM, generator=gen)
@@ -261,7 +276,13 @@ def test_key_padding_mask_excludes_padded_keys():
 
     masked = op.forward_fp32(q, k, v, causal=False, key_padding_mask=mask)
     valid_only = op.forward_fp32(q, k_valid, v_valid, causal=False)
-    assert torch.equal(masked, valid_only)
+
+    diff = (masked - valid_only).abs()
+    max_err = diff.max().item()
+    print(f"\n[padding mask] max_abs_err={max_err:.3g} (threshold={_PADDING_ATOL:.1g})")
+    assert torch.allclose(masked, valid_only, atol=_PADDING_ATOL, rtol=0.0), (
+        f"Padding-masked result diverges from valid-only by {max_err:.3g} > {_PADDING_ATOL}"
+    )
 
 
 # A query whose every key is padded out has an all -inf row; naive softmax would

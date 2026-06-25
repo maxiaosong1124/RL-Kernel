@@ -110,7 +110,10 @@ out = torch.matmul(probs, vf)                # [B, Hq, Sq, D]
   tolerance, not bitwise equality.
 - **Axis A — batch invariance**: each query row reduces over the keys independently of how many
   sequences share the batch, so a row's output is bitwise-identical (`torch.equal`, `atol=0`)
-  across batch slicing, padding, **and chunked** (chunked-prefill) configurations.
+  across batch slicing **and chunked** (chunked-prefill) configurations — these keep the softmax
+  reduction width fixed. `key_padding_mask` is the exception: padding changes the reduction width
+  (e.g. Skv=10 vs 6), so the masked result only matches the valid-only result up to a small
+  tolerance (`atol=1e-6`), not bitwise, in IEEE 754.
 - **Axis B — tolerance**: as a `reduction` op, low-precision tolerance follows the `reduction`
   row of the WS1 numerical contract. Measured drift vs the fp32 golden path (rel-peak):
 
