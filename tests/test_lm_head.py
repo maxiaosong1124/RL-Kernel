@@ -99,7 +99,7 @@ def _rand_weight(vocab=_VOCAB, hidden=_HIDDEN, *, seed, dtype=torch.float32):
 # context, so it is bitwise-equal to the ground truth only when TF32/autocast is
 # off (the default here); only bf16/fp16 introduce drift.
 def test_native_lm_head_fp32_matches_naive_matmul():
-    """forward_fp32 (and the fp32 forward path, with ambient TF32 off) is bitwise-equal to a naive fp32 matmul."""
+    """forward_fp32 (and fp32 forward, TF32 off) is bitwise-equal to a naive fp32 matmul."""
     hidden = _rand_hidden(2, 5, seed=1)
     weight = _rand_weight(seed=1)
 
@@ -164,7 +164,10 @@ def test_forward_fp32_disables_tf32_on_gpu():
     peak = ref.abs().max().item()
     strict_err = (strict - ref).abs().max().item()
     tf32_err = (tf32 - ref).abs().max().item()
-    print(f"\n[lm_head fp32-vs-tf32] strict_err={strict_err:.3g} tf32_err={tf32_err:.3g} peak={peak:.3g}")
+    print(
+        f"\n[lm_head fp32-vs-tf32] strict_err={strict_err:.3g} "
+        f"tf32_err={tf32_err:.3g} peak={peak:.3g}"
+    )
     # forward_fp32 is fp32-tight (well under the TF32 ~10-bit-mantissa drift floor)...
     assert strict_err <= 1.0e-3 * peak
     # ...and never worse than a plain matmul (far tighter when the GPU uses TF32).
@@ -258,22 +261,29 @@ def test_lm_head_inputs_not_mutated():
     assert torch.equal(hidden, h_c) and torch.equal(weight, w_c) and torch.equal(bias, b_c)
 
 
-# Gradient (fp32 autograd = backward golden source). For out.sum() the grads
-# have closed forms: dL/dhidden = weight.sum(0) per row; dL/dweight = sum of
-# hidden over (batch, seq) per vocab row.
+# Gradient (fp32 autograd = backward golden source). Backprop a *random*
+# cotangent, not out.sum(): an all-ones cotangent collapses both grads to column
+# sums (every row of each grad identical), so a transposed / mis-contracted
+# backward could still pass under that symmetry. A random dy exercises the full
+# contraction. For out = hidden @ weight.t() (weight is HF [V, K]) the exact
+# closed forms are dL/dhidden = dy @ weight and dL/dweight = dy^T @ hidden.
 def test_lm_head_gradient_flows():
-    """fp32 autograd matches the closed-form grads of out.sum()."""
+    """fp32 autograd matches the closed-form grads under a random cotangent."""
     op = NativeLMHeadOp()
     hidden = _rand_hidden(2, 4, seed=8).requires_grad_(True)
     weight = _rand_weight(seed=8).requires_grad_(True)
-    op.forward_fp32(hidden, weight).sum().backward()
+    out = op.forward_fp32(hidden, weight)
+
+    gen = torch.Generator().manual_seed(8)
+    dy = torch.randn(out.shape, generator=gen, dtype=out.dtype)
+    out.backward(dy)
 
     assert torch.isfinite(hidden.grad).all() and torch.isfinite(weight.grad).all()
     assert hidden.grad.shape == hidden.shape and weight.grad.shape == weight.shape
-    exp_h = weight.detach().sum(dim=0).expand_as(hidden.grad)
-    exp_w = hidden.detach().sum(dim=(0, 1)).expand_as(weight.grad)
-    assert torch.allclose(hidden.grad, exp_h, atol=1e-4, rtol=1e-4)
-    assert torch.allclose(weight.grad, exp_w, atol=1e-4, rtol=1e-4)
+    exp_h = dy @ weight.detach()  # [.., V] @ [V, K] -> [.., K]
+    exp_w = dy.reshape(-1, _VOCAB).t() @ hidden.detach().reshape(-1, _HIDDEN)  # [V, K]
+    torch.testing.assert_close(hidden.grad, exp_h, rtol=1e-5, atol=1e-5)
+    torch.testing.assert_close(weight.grad, exp_w, rtol=1e-5, atol=1e-5)
 
 
 # Registry dispatch -- "lm_head" resolves to NativeLMHeadOp.
