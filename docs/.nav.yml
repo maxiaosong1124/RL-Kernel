@@ -37,6 +37,7 @@ nav:
       - contributing/gtest-usage.md
       - contributing/issue-108-session-log.md
       - contributing/testing.md
+      - Automated PR Review: contributing/ocr-review.md
       - contributing/operator-doc-template.md
     - Architecture:
       - architecture/*
