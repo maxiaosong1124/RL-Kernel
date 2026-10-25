@@ -14,8 +14,9 @@ sample PRs targeting the fork's sandbox branch. Preserve each source PR's diff
 and record the source commit when preparing samples. Creating this branch alone
 does not run a model review.
 
-This section and the sandbox-only branch filter are for fork testing; omit them
-from an upstream integration PR.
+This section and the `ci/ocr-review-sandbox` branch-filter entry are for fork
+testing. Keep the project branch patterns in an upstream integration PR, and
+omit only the sandbox entry there.
 
 [Open Code Review (OCR)](https://github.com/alibaba/open-code-review) provides an
 automated first review of pull requests targeting `main`, `test`, any `test-*`
