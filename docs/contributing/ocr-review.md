@@ -18,7 +18,9 @@ This section and the sandbox-only branch filter are for fork testing; omit them
 from an upstream integration PR.
 
 [Open Code Review (OCR)](https://github.com/alibaba/open-code-review) provides an
-automated first review of pull requests targeting `main` or `test`. Opening,
+automated first review of pull requests targeting `main`, `test`, any `test-*`
+qualification branch, any `dsv4-*` development branch, or any `p6-*` development
+branch. Opening,
 reopening, or pushing commits to a PR starts a review, including draft and fork
 PRs when credentials are available. New pushes cancel older runs for the same PR;
 the latest head receives the review. Multiple commits in one push produce one
@@ -59,9 +61,11 @@ job so the problem is visible. Dependabot PRs can have separate secret restricti
 do not assume ordinary Actions secrets are available to them.
 
 The integration PR does not review itself using its proposed workflow:
-`pull_request_target` loads the workflow from the repository's default branch,
-and the pinned action reads rules from that trusted checkout. The workflow must
-be present on the default branch even when testing PRs target another branch. After merging
+`pull_request_target` loads the workflow from the PR's base branch, and the
+pinned action reads rules from that trusted checkout. The workflow and rule file
+must therefore be present on every target branch that should receive automatic
+reviews. Keep long-lived `test-*`, `dsv4-*` and `p6-*` branches synchronized with
+the integration after it lands on the default branch. After merging
 and configuring the upstream, open a small PR and push another commit to verify
 both the initial review and update behavior. For already-open PRs, push a new
 commit or reopen the PR to trigger review. Maintainers can also re-run an existing
