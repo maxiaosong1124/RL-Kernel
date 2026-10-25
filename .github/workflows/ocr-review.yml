@@ -5,7 +5,17 @@ name: Open Code Review
 
 on:
   pull_request_target:
-    branches: [main, test, ci/ocr-review-sandbox]
+    # Review PRs targeting the stable branch, the test/model qualification
+    # branches, and the active DeepSeek-V4/P6 development lines. Keep the
+    # patterns broad so a newly-created branch in one of these families does
+    # not silently lose review coverage.
+    branches:
+      - main
+      - test
+      - test-*
+      - dsv4-*
+      - p6-*
+      - ci/ocr-review-sandbox
     types: [opened, synchronize, reopened]
 
 permissions:
