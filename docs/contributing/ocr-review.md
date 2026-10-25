@@ -1,5 +1,22 @@
 # Automated PR review
 
+## Fork sandbox
+
+The `ci/ocr-review-sandbox` branch in `maxiaosong1124/RL-Kernel` contains the
+workflow and rules for rehearsal. This branch is also an allowed PR target in
+the sandbox workflow. The fork's default branch is not changed by creating it.
+
+Before automatic PR events can use this workflow, it must be available on the
+fork's default branch. Either merge the integration into the fork's current
+default branch, or deliberately make this sandbox the fork's default branch for
+the rehearsal. Configure the model secrets and variables on the fork, then open
+sample PRs targeting the fork's sandbox branch. Preserve each source PR's diff
+and record the source commit when preparing samples. Creating this branch alone
+does not run a model review.
+
+This section and the sandbox-only branch filter are for fork testing; omit them
+from an upstream integration PR.
+
 [Open Code Review (OCR)](https://github.com/alibaba/open-code-review) provides an
 automated first review of pull requests targeting `main` or `test`. Opening,
 reopening, or pushing commits to a PR starts a review, including draft and fork
